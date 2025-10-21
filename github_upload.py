@@ -186,7 +186,7 @@ def generate_content():
 *Generated on {date} by Grok (xAI) – Inspired by Live X Trends*
 *Totally fabricated for laughs—none of this is real!*
 
-{'<br><br>' + '\n'.join(stories)}
+{'<br><br>'.join(stories)}
 """
 
 def upload_to_github():
