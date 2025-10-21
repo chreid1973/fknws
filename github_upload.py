@@ -17,12 +17,12 @@ REPO_NAME = "fknws"
 FILE_PATH = "fake_news_groks_gems.md"
 BRANCH = "main"
 
-# X API configuration (using your provided keys)
+# X API configuration
 X_API_KEY = os.getenv("X_API_KEY")
 X_API_SECRET = os.getenv("X_API_SECRET")
 X_ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN")
 X_ACCESS_TOKEN_SECRET = os.getenv("X_ACCESS_TOKEN_SECRET")
-X_BEARER_TOKEN = os.getenv("X_BEARER_TOKEN")  # Will use this for simplicity
+X_BEARER_TOKEN = os.getenv("X_BEARER_TOKEN")
 
 # Story generation components
 categories = ["Technology", "Movies & TV", "A.I.", "Weird Facts", "Fashion", "Sports", "Politics", "Food"]
@@ -41,7 +41,7 @@ actions = ["reflects", "whistles", "jokes", "twirls", "soothes", "books", "toast
 plot_twists = ["causes a global dance-off", "unlocks a secret treasure", "triggers a time loop", "spawns a viral challenge", "reveals a hidden talent", "starts rooster-robot wars", "fakes a pregnancy scandal", "elects a gorilla mayor"]
 outcomes = ["profits soar", "goes viral", "confuses users", "sparks a trend", "baffles critics", "sells out instantly", "breaks the internet", "leads to lawsuits", "inspires memes"]
 
-# Static fallback inspirations (if API fails)
+# Static fallback inspirations
 static_inspirations = ["Roosters fighting robots", "AI faking faces", "Smart fridge riddles", "Robot dance-offs", "Weird tech hoaxes"]
 
 # Fetch live X inspiration
@@ -49,24 +49,24 @@ def fetch_x_inspiration():
     if X_BEARER_TOKEN:
         url = "https://api.twitter.com/2/tweets/search/recent"
         headers = {"Authorization": f"Bearer {X_BEARER_TOKEN}"}
-        params = {"query": "absurd technology OR funny AI OR weird facts -is:retweet", "max_results": 10, "tweet.fields": "text"}
+        params = {"query": "absurd OR funny OR weird -is:retweet", "max_results": 10, "tweet.fields": "text"}
         try:
             response = requests.get(url, headers=headers, params=params, timeout=10)
             response.raise_for_status()
             data = response.json()
-            logger.info(f"X API response status: {response.status_code}")
+            logger.info(f"X API response: Status {response.status_code}, Data: {data}")
             if "data" in data and data["data"]:
                 inspirations = [tweet["text"].split(",")[0] for tweet in data["data"] if len(tweet["text"].split(",")) > 0][:5]
-                logger.info(f"Fetched inspirations: {inspirations}")
+                logger.info(f"Live inspirations fetched: {inspirations}")
                 return inspirations
             else:
-                logger.warning("No tweet data in response, using static fallback")
+                logger.warning("No live tweet data, using static fallback")
                 return static_inspirations
         except requests.exceptions.RequestException as e:
             logger.error(f"X API error: {e}, using static fallback")
             return static_inspirations
     else:
-        logger.error("No X_BEARER_TOKEN set, using static fallback")
+        logger.error("No X_BEARER_TOKEN, using static fallback")
         return static_inspirations
 
 def generate_story(inspirations):
@@ -181,12 +181,12 @@ The {quirk} bite began when recipes got {quirk}ed. '{char} munched—got a '{qui
 def generate_content():
     date = datetime.datetime.now().strftime("%B %d, %Y")
     inspirations = fetch_x_inspiration()
-    stories = [generate_story(inspirations) for _ in range(10)]  # 10 random stories
+    stories = [generate_story(inspirations) for _ in range(10)]
     return f"""# Grok's Fake Comedic News Stories
 *Generated on {date} by Grok (xAI) – Inspired by Live X Trends*
 *Totally fabricated for laughs—none of this is real!*
 
-{''.join(stories)}
+{'<br><br>' + '\n'.join(stories)}
 """
 
 def upload_to_github():
