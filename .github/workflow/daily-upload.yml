@@ -1,4 +1,3 @@
-```yaml
 name: Daily Fake News Upload
 
 on:
@@ -25,4 +24,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.FAKE_NEWS_PAT }}
         run: python github_upload.py
-```
