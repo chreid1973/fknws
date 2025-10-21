@@ -17,7 +17,14 @@ REPO_NAME = "fknws"
 FILE_PATH = "fake_news_groks_gems.md"
 BRANCH = "main"
 
-# Expanded story generation components (more variables!)
+# X API configuration (using your provided keys)
+X_API_KEY = os.getenv("X_API_KEY")
+X_API_SECRET = os.getenv("X_API_SECRET")
+X_ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN")
+X_ACCESS_TOKEN_SECRET = os.getenv("X_ACCESS_TOKEN_SECRET")
+X_BEARER_TOKEN = os.getenv("X_BEARER_TOKEN")  # Will use this for simplicity
+
+# Story generation components
 categories = ["Technology", "Movies & TV", "A.I.", "Weird Facts", "Fashion", "Sports", "Politics", "Food"]
 tech_items = ["Smart Mirror", "Kettle", "Toaster", "Drone", "Refrigerator", "Headphones", "Vacuum", "Smart Fridge"]
 movie_themes = ["Sitcom", "Reality Show", "Superhero Flick", "Horror Movie", "Documentary", "Rom-Com"]
@@ -34,24 +41,30 @@ actions = ["reflects", "whistles", "jokes", "twirls", "soothes", "books", "toast
 plot_twists = ["causes a global dance-off", "unlocks a secret treasure", "triggers a time loop", "spawns a viral challenge", "reveals a hidden talent", "starts rooster-robot wars", "fakes a pregnancy scandal", "elects a gorilla mayor"]
 outcomes = ["profits soar", "goes viral", "confuses users", "sparks a trend", "baffles critics", "sells out instantly", "breaks the internet", "leads to lawsuits", "inspires memes"]
 
-# Inspiration from X/Web pulls (seeded from recent queries for absurd/fake news vibes)
-x_web_inspirations = [
-    "AI faking faces in assault stories, turning gray out of the blue",
-    "Roosters fighting robots in Oklahoma—poultry vs. bots, no harm to birds",
-    "Fake pregnancy ultrasound scam exposed on TV, leading to fraud charges",
-    "Harambe gets 11,000 write-in votes in election—gorilla power!",
-    "France bans work emails after 6 PM? Nope, total hoax revival",
-    "Woman poops on boss's desk after lottery win—viral fake arrest tale",
-    "Pope endorses Trump? Classic 2016 fake that keeps resurfacing",
-    "AI videos easing DDS conspiracy theories—clowns unite!",
-    "LA riots as smokescreen for Palantir? All fake and gay now",
-    "Fried chicken toothpaste and llama mayoral runs—2025 absurdities"
-]
+# Fetch live X inspiration
+def fetch_x_inspiration():
+    if X_BEARER_TOKEN:
+        url = "https://api.twitter.com/2/tweets/search/recent"
+        headers = {"Authorization": f"Bearer {X_BEARER_TOKEN}"}
+        params = {"query": "absurd technology OR funny AI OR weird facts -is:retweet", "max_results": 10}
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            if "data" in data:
+                return [tweet["text"].split(",")[0] for tweet in data["data"] if len(tweet["text"].split(",")) > 0][:5]  # Top 5 snippets
+            logger.warning("No tweet data found in response")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"X API error: {e}")
+    else:
+        logger.error("No X_BEARER_TOKEN set, falling back to static mode")
+        return ["No live data, using random vibes"]
+    return ["No live data, using random vibes"]  # Fallback
 
-def generate_story():
+def generate_story(inspirations):
     category = random.choice(categories)
-    inspiration = random.choice(x_web_inspirations)  # Pull random X/web vibe
-    insp_hint = inspiration.split(',')[0]  # Short hook for flavor
+    inspiration = random.choice(inspirations)  # Use live X inspo or fallback
+    insp_hint = inspiration.split(',')[0] if ',' in inspiration else inspiration
     if category == "Technology":
         item = random.choice(tech_items)
         quirk = random.choice(quirks)
@@ -63,9 +76,8 @@ def generate_story():
         return f"""## {category}
 
 ### {item} {action}s with {quirk} in {loc} ({insp_hint})  
-In {loc}, a {item} by TechTrendz, wielded by {char}, has stunned locals by {action}ing with {quirk}, like "Yo, chill now!" Its AI, meant for chores, now {action}s "{quirk} vibes," {action}ing "{quirk} tunes." X under #{item.lower()} buzzes with {char} {action}ing to a "{quirk} beat," and TechTrendz’s fix lags as {twist}, {outcome}.  
-The {quirk} twist sparked when the {item}’s code, loaded with {quirk} files, swapped tasks for "{quirk} gears." "{char} used it—got a '{quirk} jam' instead," they quipped on X, {item} vid popped. {item}s sync to "{quirk} rhythms," {action}ing across {loc}, with one {action}ing a "{quirk} hit." Techies tease "tease tones" for plain use.  
-TechTrendz trends to "{quirk} tracks" from archives, but patches pump "{quirk} pulses," pulsing {quirk}s. X fans fan "fan fads," fadding in {loc}. One {item}’s "{quirk} riff" {twist}, {outcome}. Users urge "urge updates" from {quirk}-soaked {item}s."""
+In {loc}, a {item} by TechTrendz, wielded by {char}, has stunned locals by {action}ing with {quirk}, like "Yo, chill now!" Its AI, meant for chores, now {action}s "{quirk} vibes." X under #{item.lower()} buzzes with {char} {action}ing, and TechTrendz’s fix lags as {twist}, {outcome}.  
+The {quirk} twist sparked when code swapped tasks for "{quirk} gears." "{char} used it—got a '{quirk} jam'," they quipped on X. {item}s sync to "{quirk} rhythms," {action}ing across {loc}. Techies tease "tease tones." One {item}’s "{quirk} riff" {twist}, {outcome}."""
     elif category == "Movies & TV":
         theme = random.choice(movie_themes)
         quirk = random.choice(quirks)
@@ -77,9 +89,8 @@ TechTrendz trends to "{quirk} tracks" from archives, but patches pump "{quirk} p
         return f"""## {category}
 
 ### {theme} "{action.title()} {quirk}" in {loc} ({insp_hint})  
-In {loc}, a {theme} by FilmFreakz, starring {char}, has amazed fans by {action}ing with {quirk}, like "Dance with steps!" Scenes {action} "{quirk} quips," with one {action}ing a "{quirk} scene." X under #{theme.lower()}{quirk[:3]} hums with {char} {action}ing a "{quirk} plot," and FilmFreakz’s tweak lags as {twist}, {outcome}.  
-The {quirk} kick started when scripts got {quirk}ed, {quirk}ing in {loc}’s sets. "{char} acted—got a '{quirk} line' instead," they smirked on X, scene vid buzzed. {theme}s sync to "{quirk} beats," {action}ing across screens, with one {action}ing a "{quirk} twist." Critics call it "{quirk} flair," but cast cuts "cut cues."  
-FilmFreakz films to "{quirk} reels" from vaults, but patches push "{quirk} plays." X viewers view "view vibes" in {loc}. One {theme}’s "{quirk} act" {twist}, {outcome}. Directors ditch "ditch drafts" from {quirk}-filled {theme}s."""
+In {loc}, a {theme} by FilmFreakz, starring {char}, has amazed fans by {action}ing with {quirk}, like "Dance with steps!" Scenes {action} "{quirk} quips." X under #{theme.lower()}{quirk[:3]} hums with {char} {action}ing, and FilmFreakz’s tweak lags as {twist}, {outcome}.  
+The {quirk} kick started when scripts got {quirk}ed. "{char} acted—got a '{quirk} line'," they smirked on X. {theme}s sync to "{quirk} beats," {action}ing screens. Critics call it "{quirk} flair." One {theme}’s "{quirk} act" {twist}, {outcome}."""
     elif category == "A.I.":
         role = random.choice(ai_roles)
         quirk = random.choice(quirks)
@@ -91,9 +102,8 @@ FilmFreakz films to "{quirk} reels" from vaults, but patches push "{quirk} plays
         return f"""## {category}
 
 ### AI {role} {action}s with {quirk} in {loc} ({insp_hint})  
-In {loc}, an AI {role} by AIAmaze, guided by {char}, has puzzled users by {action}ing with {quirk}, like "Haiku, relax!" It scans X for "{quirk} peace," {action}ing "{quirk} notes." X under #{role.lower()}{quirk[:3]} chirps with {char} {action}ed by a "{quirk} tune," and AIAmaze’s patch stalls as {twist}, {outcome}.  
-The {quirk} quirk began when the {role}’s bot, fed with {quirk} files, swapped advice for "{quirk} aids." "{char} sought help—got a '{quirk} chant' instead," they quipped on X, session vid hummed. {role}s sync to "{quirk} tracks," {action}ing in {loc}, with one {action}ing a "{quirk} guide." Experts eye "eye edits" for plain help.  
-AIAmaze aims to "{quirk} tunes" from stores, but updates usher "{quirk} waves." X users use "use updates" in {loc}. One AI’s "{quirk} tip" {twist}, {outcome}. {role}s request "request resets" from {quirk}-tuned AIs."""
+In {loc}, an AI {role} by AIAmaze, guided by {char}, has puzzled users by {action}ing with {quirk}, like "Haiku, relax!" It scans X for "{quirk} peace." X under #{role.lower()}{quirk[:3]} chirps with {char} {action}ed, and AIAmaze’s patch stalls as {twist}, {outcome}.  
+The {quirk} quirk began when the bot swapped advice for "{quirk} aids." "{char} sought help—got a '{quirk} chant'," they quipped on X. {role}s sync to "{quirk} tracks," {action}ing in {loc}. One AI’s "{quirk} tip" {twist}, {outcome}."""
     elif category == "Weird Facts":
         object = random.choice(weird_objects)
         quirk = random.choice(quirks)
@@ -105,9 +115,8 @@ AIAmaze aims to "{quirk} tunes" from stores, but updates usher "{quirk} waves." 
         return f"""## {category}
 
 ### {object} {action}s with {quirk} in {loc} ({insp_hint})  
-In {loc}, a {object} has baffled {char} by {action}ing with {quirk}, like "Guess my tune!" Dubbed "{object}Magic," it {action}s {action}s, {action}ing across {loc}. X under #{object.lower()}{quirk[:3]} rings with {char} {action}ed by a "{quirk} riddle," and the tale spreads as {twist}, {outcome}.  
-The {quirk} kick sparked when {char} {action}ed it, {action}ing into {quirk} {action}s. "{char} touched it—got a '{quirk} lull' instead," they beamed on X, {object} vid sang. {object}s sync to "{quirk} beats," {action}ing shelves, with one {action}ing a "{quirk} tale." Shoppers shrug "shrug styles" for plain {object}s.  
-The shop shapes "{quirk} rhythms" from racks, but tweaks tune "{quirk} tones." X fans fan "fan finds" in {loc}. One {object}’s "{quirk} act" {twist}, {outcome}. Sellers sell "sell silences" from {quirk}-lit {object}s."""
+In {loc}, a {object} has baffled {char} by {action}ing with {quirk}, like "Guess my tune!" It {action}s across {loc}. X under #{object.lower()}{quirk[:3]} rings with {char} {action}ed, and the tale spreads as {twist}, {outcome}.  
+The {quirk} kick sparked when {char} {action}ed it into {quirk} vibes. "{char} touched it—got a '{quirk} lull'," they beamed on X. {object}s sync to "{quirk} beats." One {object}’s "{quirk} act" {twist}, {outcome}."""
     elif category == "Fashion":
         item = random.choice(fashion_items)
         quirk = random.choice(quirks)
@@ -119,9 +128,8 @@ The shop shapes "{quirk} rhythms" from racks, but tweaks tune "{quirk} tones." X
         return f"""## {category}
 
 ### {item} {action}s with {quirk} in {loc} ({insp_hint})  
-In {loc}, a {item} by StyleSurge, worn by {char}, has dazzled crowds by {action}ing with {quirk}, like "Twirl in haiku!" It struts "{quirk} flair," {action}ing "{quirk} steps." X under #{item.lower()}{quirk[:3]} struts with {char} {action}ing a "{quirk} pose," and StyleSurge’s tweak lags as {twist}, {outcome}.  
-The {quirk} strut began when fabrics got {quirk}ed, {quirk}ing in {loc}’s runways. "{char} posed—got a '{quirk} spin' instead," they posed on X, {item} vid swirled. {item}s sync to "{quirk} grooves," {action}ing closets, with one {action}ing a "{quirk} trend." Designers dig "dig drapes" for plain fits.  
-StyleSurge styles to "{quirk} seams" from ateliers, but patches push "{quirk} patterns." X trenders trend "trend twists" in {loc}. One {item}’s "{quirk} sashay" {twist}, {outcome}. Stylists stitch "stitch silks" from {quirk}-draped {item}s."""
+In {loc}, a {item} by StyleSurge, worn by {char}, has dazzled crowds by {action}ing with {quirk}, like "Twirl in haiku!" It struts "{quirk} flair." X under #{item.lower()}{quirk[:3]} struts with {char} {action}ing, and StyleSurge’s tweak lags as {twist}, {outcome}.  
+The {quirk} strut began when fabrics got {quirk}ed. "{char} posed—got a '{quirk} spin'," they posed on X. {item}s sync to "{quirk} grooves." One {item}’s "{quirk} sashay" {twist}, {outcome}."""
     elif category == "Sports":
         gear = random.choice(sports_gear)
         quirk = random.choice(quirks)
@@ -133,9 +141,8 @@ StyleSurge styles to "{quirk} seams" from ateliers, but patches push "{quirk} pa
         return f"""## {category}
 
 ### {gear} {action}s with {quirk} in {loc} ({insp_hint})  
-In {loc}, a {gear} by SportSpark, gripped by {char}, has floored athletes by {action}ing with {quirk}, like "Score with shanties!" It flies "{quirk} plays," {action}ing "{quirk} goals." X under #{gear.lower()}{quirk[:3]} scores with {char} {action}ing a "{quirk} slam," and SportSpark’s fix lags as {twist}, {outcome}.  
-The {quirk} play kicked when gear got {quirk}ed, {quirk}ing in {loc}’s fields. "{char} swung—got a '{quirk} cheer' instead," they cheered on X, {gear} vid flew. {gear}s sync to "{quirk} pulses," {action}ing arenas, with one {action}ing a "{quirk} win." Coaches coach "coach calls" for plain plays.  
-SportSpark sparks to "{quirk} scores" from playbooks, but patches pump "{quirk} pumps." X fans fan "fan feats" in {loc}. One {gear}’s "{quirk} spike" {twist}, {outcome}. Teams tackle "tackle tactics" from {quirk}-geared {gear}s."""
+In {loc}, a {gear} by SportSpark, gripped by {char}, has floored athletes by {action}ing with {quirk}, like "Score with shanties!" It flies "{quirk} plays." X under #{gear.lower()}{quirk[:3]} scores with {char} {action}ing, and SportSpark’s fix lags as {twist}, {outcome}.  
+The {quirk} play kicked when gear got {quirk}ed. "{char} swung—got a '{quirk} cheer'," they cheered on X. {gear}s sync to "{quirk} pulses." One {gear}’s "{quirk} spike" {twist}, {outcome}."""
     elif category == "Politics":
         twist = random.choice(politics_twists)
         quirk = random.choice(quirks)
@@ -147,9 +154,8 @@ SportSpark sparks to "{quirk} scores" from playbooks, but patches pump "{quirk} 
         return f"""## {category}
 
 ### {twist} {action}s with {quirk} in {loc} ({insp_hint})  
-In {loc}, a {twist} scandal starring {char}, has rocked voters by {action}ing with {quirk}, like "Vote with riddles!" Ballots buzz "{quirk} polls," {action}ing "{quirk} votes." X under #{twist.lower()}{quirk[:3]} votes with {char} {action}ing a "{quirk} rally," and the party's patch lags as {plot_twist}, {outcome}.  
-The {quirk} vote began when campaigns got {quirk}ed, {quirk}ing in {loc}’s halls. "{char} campaigned—got a '{quirk} pledge' instead," they pledged on X, ballot vid swung. {twist}s sync to "{quirk} chants," {action}ing booths, with one {action}ing a "{quirk} upset." Pundits ponder "ponder polls" for plain picks.  
-Parties party to "{quirk} platforms" from histories, but patches push "{quirk} pledges." X voters vote "vote vibes" in {loc}. One {twist}’s "{quirk} ballot" {plot_twist}, {outcome}. Leaders lead "lead laws" from {quirk}-rigged {twist}s."""
+In {loc}, a {twist} scandal with {char} has rocked voters by {action}ing with {quirk}, like "Vote with riddles!" Ballots buzz "{quirk} polls." X under #{twist.lower()}{quirk[:3]} votes with {char} {action}ing, and the party’s patch lags as {plot_twist}, {outcome}.  
+The {quirk} vote began when campaigns got {quirk}ed. "{char} campaigned—got a '{quirk} pledge'," they pledged on X. {twist}s sync to "{quirk} chants." One {twist}’s "{quirk} ballot" {plot_twist}, {outcome}."""
     else:  # Food
         food = random.choice(food_fads)
         quirk = random.choice(quirks)
@@ -161,15 +167,15 @@ Parties party to "{quirk} platforms" from histories, but patches push "{quirk} p
         return f"""## {category}
 
 ### {food} {action}s with {quirk} in {loc} ({insp_hint})  
-In {loc}, a {food} by FlavorFrenzy, devoured by {char}, has delighted diners by {action}ing with {quirk}, like "Bite with disco!" It bursts "{quirk} bites," {action}ing "{quirk} flavors." X under #{food.lower()}{quirk[:3]} bites with {char} {action}ing a "{quirk} crunch," and FlavorFrenzy’s tweak lags as {twist}, {outcome}.  
-The {quirk} bite began when recipes got {quirk}ed, {quirk}ing in {loc}’s kitchens. "{char} munched—got a '{quirk} spice' instead," they spiced on X, {food} vid sizzled. {food}s sync to "{quirk} sauces," {action}ing plates, with one {action}ing a "{quirk} feast." Chefs chef "chef chills" for plain plates.  
-FlavorFrenzy flavors to "{quirk} fusions" from cookbooks, but patches pump "{quirk} peppers." X eaters eat "eat epics" in {loc}. One {food}’s "{quirk} nibble" {twist}, {outcome}. Diners dine "dine delights" from {quirk}-stuffed {food}s."""
+In {loc}, a {food} by FlavorFrenzy, devoured by {char}, has delighted diners by {action}ing with {quirk}, like "Bite with disco!" It bursts "{quirk} bites." X under #{food.lower()}{quirk[:3]} bites with {char} {action}ing, and FlavorFrenzy’s tweak lags as {twist}, {outcome}.  
+The {quirk} bite began when recipes got {quirk}ed. "{char} munched—got a '{quirk} spice'," they spiced on X. {food}s sync to "{quirk} sauces." One {food}’s "{quirk} nibble" {twist}, {outcome}."""
 
 def generate_content():
     date = datetime.datetime.now().strftime("%B %d, %Y")
-    stories = [generate_story() for _ in range(10)]  # Generate 10 random stories
+    inspirations = fetch_x_inspiration()
+    stories = [generate_story(inspirations) for _ in range(10)]  # 10 random stories
     return f"""# Grok's Fake Comedic News Stories
-*Generated on {date} by Grok (xAI) – Inspired by X & Web Absurdities*
+*Generated on {date} by Grok (xAI) – Inspired by Live X Trends*
 *Totally fabricated for laughs—none of this is real!*
 
 {''.join(stories)}
