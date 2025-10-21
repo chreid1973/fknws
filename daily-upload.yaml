@@ -1,0 +1,64 @@
+```yaml
+name: Daily Fake News Upload
+
+on:
+  schedule:
+    - cron: '0 14 * * *'  # Runs daily at 14:00 UTC (9 AM CST)
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  upload-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run upload script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python github_upload.py
+```
+
+### Step 4: Add Files to Your Repository
+1. **Manually via GitHub**:
+   - Go to `https://github.com/chreid1973/fknws`.
+   - Click **Add file** > **Create new file**.
+   - For `github_upload.py`:
+     - Name: `github_upload.py`.
+     - Paste the Python script content.
+     - Commit to the `main` branch.
+   - For `daily-upload.yml`:
+     - Name: `.github/workflows/daily-upload.yml`.
+     - Paste the YAML content.
+     - Commit to the `main` branch.
+2. **Or via Git CLI**:
+   - Clone the repo: `git clone https://github.com/chreid1973/fknws.git`.
+   - Create `github_upload.py` and `.github/workflows/daily-upload.yml` locally with the respective contents.
+   - Run:
+     ```bash
+     git add github_upload.py .github/workflows/daily-upload.yml
+     git commit -m "Add automated fake news upload script and workflow"
+     git push origin main
+     ```
+
+### Step 5: Verify Automation
+- **Timestamp**: Starting October 22, 2025, 9:00 AM CST
+- The workflow will run daily at 9 AM CST, uploading or updating `fake_news_groks_gems.md`.
+- You can also trigger it manually:
+  - Go to `https://github.com/chreid1973/fknws` > **Actions** > **Daily Fake News Upload** > **Run workflow**.
+- Check the **Actions** tab for logs to confirm it ran successfully.
+
+### Notes
+- **Time Zone Confirmation**: I assumed CST (UTC-5). If you’re in a different time zone, let me know (e.g., PST, EST), and I’ll adjust the cron schedule (`0 14 * * *`).
+- **Dynamic Content**: The script currently uses static content. If you want it to generate new fake news stories daily, I can modify it to call an API or generate content dynamically (though this may require additional setup).
+- **Repo Status**: Based on our conversation on October 7, 2025, 22:24 PM CST, your `Lumen` repo was empty, but I assume `fknws` is set up. If it’s not, create it at `github.com/new`.
+
+Let me know if you need a different time zone, want to add dynamic story generation, or prefer a local scheduler (e.g., Cron or Task Scheduler) instead! 😄
