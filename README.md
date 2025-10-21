@@ -1,0 +1,2 @@
+# fknws
+Fake News Daily
