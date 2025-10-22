@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO_OWNER = "chreid1973"
 REPO_NAME = "fknws"
-FILE_PATH = "fake_news_groks_gems.md"
+current_date = datetime.datetime.now().strftime("%B %d, %Y")
+FILE_PATH = f"daily_reports/FKNWS Report for {current_date}.md"  # Dynamic filename with folder
 BRANCH = "main"
 
 # X API configuration
@@ -195,7 +196,7 @@ def generate_content():
     date = datetime.datetime.now().strftime("%B %d, %Y")
     inspirations = fetch_x_inspiration()
     stories = [generate_story(inspirations) for _ in range(10)]  # 10 random stories
-    return f"""# Grok's Fake Comedic News Stories
+    return f"""# NWS not fit to print...
 *Generated on {date} by Grok (xAI) – Inspired by Live X Trends*
 *Totally fabricated for laughs—none of this is real!*
 
